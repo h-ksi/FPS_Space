@@ -30,8 +30,8 @@ public class WeaponHolder : MonoBehaviour {
 		m_Weapon = Instantiate(Resources.Load(path)) as GameObject;
 
 		m_Weapon.transform.SetParent(transform, false);
-		m_Weapon.transform.localPosition = new Vector3(0.0305f, 0.226f, -0.1178f);
-		m_Weapon.transform.localRotation = Quaternion.Euler(-110f, -45f, 38.7f);
+		m_Weapon.transform.localPosition = new Vector3(0.0264f,	0.1912f, -0.1083f);
+		m_Weapon.transform.localRotation = Quaternion.Euler(-106.691f, -23.564f, -8.89801f);
 		m_Weapon.transform.localScale = new Vector3(7f, 7f, 7f);
 	}
 }
