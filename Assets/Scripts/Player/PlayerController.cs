@@ -12,12 +12,21 @@ namespace FPS{
 		[Range(0.1f, 2f)]
 		public float walkSpeed = 1.5f;
 		[Range(0.1f, 10f)]
-		public float runSpeed = 3.5f;
+		public float runSpeed = 2.5f;
 
 		// Character Controller
 		private CharacterController charaController;
 
+		private GameObject FPSCamera;
+		private Vector3 moveDir = Vector3.zero;
+
+		[Range(0.1f, 10f)]
+		public float gravity = 9.81f;
+		[Range(1f, 15f)]
+		public float jumpPower = 5f;
+
 		void Start(){
+			FPSCamera = GameObject.Find("FPSCamera");
 			charaController = GetComponent<CharacterController>();
 		}
 
@@ -33,13 +42,24 @@ namespace FPS{
 			if(movement.sqrMagnitude > 1){
 				movement.Normalize();
 			}
-			
+
+			Vector3 desiredMove = FPSCamera.transform.forward * movement.z + FPSCamera.transform.right * movement.x;
+			moveDir.x = desiredMove.x * 5f;
+			moveDir.z = desiredMove.z * 5f;
 			// Run
 			if(Input.GetKey(KeyCode.LeftShift)||Input.GetKey(KeyCode.RightShift)){
-				charaController.Move(movement * Time.fixedDeltaTime * runSpeed);
+				charaController.Move(moveDir * Time.fixedDeltaTime * runSpeed);
 			}
 			else{
-				charaController.Move(movement * Time.fixedDeltaTime * walkSpeed);
+				charaController.Move(moveDir * Time.fixedDeltaTime * walkSpeed);
+			}
+
+			// 落下加速度の調整
+			moveDir.y -= gravity * Time.deltaTime * 2f;
+			if(charaController.isGrounded){
+				if(Input.GetKeyDown(KeyCode.Space)){
+					moveDir.y = jumpPower;
+				}
 			}
 		}
 	}
