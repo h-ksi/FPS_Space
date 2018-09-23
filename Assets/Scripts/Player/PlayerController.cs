@@ -10,9 +10,14 @@ namespace FPS{
 	[RequireComponent(typeof(CharacterController), typeof(AudioSource))]
 	public class PlayerController: MonoBehaviour{
 		[Range(0.1f, 2f)]
-		public float walkSpeed = 1.5f;
+		public float walkSpeed = 1.3f;
 		[Range(0.1f, 10f)]
-		public float runSpeed = 2.5f;
+		public float runSpeed = 2.3f;
+		[Range(0.05f, 1.2f)]
+		public float crouchSpeed = 0.7f;
+		[Range(0.1f, 2f)]
+		public float crouchRunSpeed = 1.4f;
+
 
 		// Character Controller
 		private CharacterController charaController;
@@ -25,6 +30,11 @@ namespace FPS{
 		[Range(1f, 15f)]
 		public float jumpPower = 5f;
 
+		[Range(0.1f, 2f)]
+		public float crouchHeight  = 1f;
+		[Range(0.1f, 5f)]
+		public float normalHeight = 2f;
+
 		void Start(){
 			FPSCamera = GameObject.Find("FPSCamera");
 			charaController = GetComponent<CharacterController>();
@@ -32,6 +42,12 @@ namespace FPS{
 
 		void Update(){
 			Move();
+
+			Crouch();
+		}
+
+		void FixedUpdate(){
+
 		}
 
 		void Move(){
@@ -50,6 +66,15 @@ namespace FPS{
 			if(Input.GetKey(KeyCode.LeftShift)||Input.GetKey(KeyCode.RightShift)){
 				charaController.Move(moveDir * Time.fixedDeltaTime * runSpeed);
 			}
+			// Crouch
+			else if(Input.GetKey(KeyCode.C)){
+				charaController.Move(moveDir * Time.fixedDeltaTime * crouchSpeed);
+			}
+			// Crouch Run
+			else if(Input.GetKey(KeyCode.C) && (Input.GetKey(KeyCode.LeftShift)||Input.GetKey(KeyCode.RightShift))){
+				charaController.Move(moveDir * Time.fixedDeltaTime * crouchRunSpeed);
+			}
+			// Walk
 			else{
 				charaController.Move(moveDir * Time.fixedDeltaTime * walkSpeed);
 			}
@@ -60,6 +85,15 @@ namespace FPS{
 				if(Input.GetKeyDown(KeyCode.Space)){
 					moveDir.y = jumpPower;
 				}
+			}
+		}
+
+		void Crouch(){
+			if(Input.GetKey(KeyCode.C)){
+				charaController.height = Mathf.Lerp(normalHeight, crouchHeight, 1f);
+			}
+			else{
+				charaController.height = normalHeight;
 			}
 		}
 	}
