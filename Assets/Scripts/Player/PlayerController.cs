@@ -2,64 +2,26 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FPS{
-	public enum PlayerState{
-		Idle, Walking, Running, Jumping
-	}
-
+namespace FPS
+{
 	[RequireComponent(typeof(CharacterController), typeof(AudioSource))]
-	public class PlayerController: MonoBehaviour{
-		[Range(0.1f, 2f)]
-		public float walkSpeed = 1.5f;
-		[Range(0.1f, 10f)]
-		public float runSpeed = 2.5f;
+	public class PlayerController : MonoBehaviour
+	{
+		private float moveH;
+		private float moveV;
 
-		// Character Controller
-		private CharacterController charaController;
+		void Start()
+		{
 
-		private GameObject FPSCamera;
-		private Vector3 moveDir = Vector3.zero;
-
-		[Range(0.1f, 10f)]
-		public float gravity = 9.81f;
-		[Range(1f, 15f)]
-		public float jumpPower = 5f;
-
-		void Start(){
-			FPSCamera = GameObject.Find("FPSCamera");
-			charaController = GetComponent<CharacterController>();
 		}
 
-		void Update(){
-			Move();
-		}
-
-		void Move(){
-			float moveH = Input.GetAxis("Horizontal");
-			float moveV = Input.GetAxis("Vertical");
-			Vector3 movement = new Vector3(moveH, 0, moveV);
-
-			if(movement.sqrMagnitude > 1){
-				movement.Normalize();
-			}
-
-			Vector3 desiredMove = FPSCamera.transform.forward * movement.z + FPSCamera.transform.right * movement.x;
-			moveDir.x = desiredMove.x * 5f;
-			moveDir.z = desiredMove.z * 5f;
-			// Run
-			if(Input.GetKey(KeyCode.LeftShift)||Input.GetKey(KeyCode.RightShift)){
-				charaController.Move(moveDir * Time.fixedDeltaTime * runSpeed);
-			}
-			else{
-				charaController.Move(moveDir * Time.fixedDeltaTime * walkSpeed);
-			}
-
-			// 落下加速度の調整
-			moveDir.y -= gravity * Time.deltaTime * 2f;
-			if(charaController.isGrounded){
-				if(Input.GetKeyDown(KeyCode.Space)){
-					moveDir.y = jumpPower;
-				}
+		void Update()
+		{
+			moveH = Input.GetAxis("Horizontal");
+			moveV = Input.GetAxis("Vertical");
+			if(moveH != 0 || moveV != 0)
+			{
+				GetComponent<PlayerMover>().Move(moveH, moveV);
 			}
 		}
 	}

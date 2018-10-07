@@ -2,14 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace FPS{
-	public class CameraController: MonoBehaviour{
+namespace FPS
+{
+	public class CameraController : MonoBehaviour
+	{
 		[Range(0.1f, 10f)]
-		public float lookSensitivity = 5f;
+		private float lookSensitivity = 5f;
 		[Range(0.1f, 1f)]
-		public float lookSmooth = 0.5f;
+		private float lookSmooth = 0.1f;
 
-		public Vector2 MinMaxAngle = new Vector2(-75, 75);
+		private Vector2 MinMaxAngle = new Vector2(-75, 75);
 
 		private float yRot;
 		private float xRot;
@@ -20,7 +22,8 @@ namespace FPS{
 		private float yRotVelocity;
 		private float xRotVelocity;
 
-		void Update(){
+		void Update()
+		{
 			yRot += Input.GetAxis("Mouse X") * lookSensitivity;
 			xRot -= Input.GetAxis("Mouse Y") * lookSensitivity;
 
