@@ -4,63 +4,83 @@ using UnityEngine;
 
 namespace FPS
 {
-	[RequireComponent(typeof(CharacterController), typeof(AudioSource))]
+	[RequireComponent(typeof(CharacterController),typeof(CheckGroundedWithRaycast))]
 	public class PlayerMover : MonoBehaviour
 	{
-		public enum PlayerState
-		{
-			Idle, 
-			Walking, 
-			Running, 
-			Jumping
-		}
-
 		private CharacterController charaController;
-		private GameObject FPSCamera;
-		private Vector3 moveDir = Vector3.zero;
-
-		[Range(0.1f, 2f)]
-		[SerializeField] private float walkSpeed = 1.5f;
-		[Range(0.1f, 10f)]
-		[SerializeField] private float runSpeed = 2.5f;
+		private GameObject fpsCamera;
+		private Vector3 velocityVector = Vector3.zero;
+		private Vector3 fpsCameraDirection = Vector3.zero;
+		private CheckGroundedWithRaycast checkGroundedWithRaycast;
 
 		[Range(0.1f, 10f)]
-		[SerializeField] private float gravity = 9.81f;
+		private float walkSpeed = 5f;
+		[Range(0.1f, 20f)]
+		private float runSpeed = 10f;
 		[Range(1f, 15f)]
-		[SerializeField] private float jumpPower = 5f;
+		private float jumpSpeed = 4f;
+		private float gravity;
+
 
 		public void Start(){
-			FPSCamera = GameObject.Find("FPSCamera");
+			gravity = Physics.gravity.y;	//	-9.81
+			fpsCamera = GameObject.FindWithTag("FPSCamera").gameObject;
 			charaController = GetComponent<CharacterController>();
+			checkGroundedWithRaycast = GetComponent<CheckGroundedWithRaycast>();	
 		}
 
-		public void Move(float moveH, float moveV)
-		{
-			Vector3 movement = new Vector3(moveH, 0, moveV);
+		public void Move()
+		{	
+			// Input
+			float moveH = Input.GetAxis("Horizontal");
+			float moveV = Input.GetAxis("Vertical");
+			bool runKey = (Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.LeftShift)) ? true : false;
+			bool jumpKey = Input.GetKeyDown(KeyCode.Space);
 
-			if(movement.sqrMagnitude > 1)
+			// FPSCamera単位方向ベクトル
+			fpsCameraDirection = fpsCamera.transform.forward * moveV + fpsCamera.transform.right * moveH;
+			if(fpsCameraDirection != Vector3.zero)
 			{
-				movement.Normalize();
+				fpsCameraDirection.Normalize();
 			}
 
-			Vector3 direction = FPSCamera.transform.forward * movement.z + FPSCamera.transform.right * movement.x;
-			moveDir.x = direction.x * 5f;
-			moveDir.z = direction.z * 5f;
+			// 速度ベクトルの方向をFPSCamera方向に設定
+			velocityVector.x = fpsCameraDirection.x;
+			velocityVector.z = fpsCameraDirection.z;
+
 			// Run
-			if(Input.GetKey(KeyCode.LeftShift)||Input.GetKey(KeyCode.RightShift)){
-				charaController.Move(moveDir * Time.fixedDeltaTime * runSpeed);
+			if(runKey)
+			{
+				velocityVector.x *= runSpeed;
+				velocityVector.z *= runSpeed;
 			}
-			else{
-				charaController.Move(moveDir * Time.fixedDeltaTime * walkSpeed);
+			// Walk
+			else
+			{
+				velocityVector.x *= walkSpeed;
+				velocityVector.z *= walkSpeed;
 			}
 
-			// 落下加速度の調整
-			moveDir.y -= gravity * Time.deltaTime * 2f;
-			if(charaController.isGrounded){
-				if(Input.GetKeyDown(KeyCode.Space)){
-					moveDir.y = jumpPower;
+
+			// Jump処理
+			// 接地時
+			if (checkGroundedWithRaycast.CheckGrounded())
+			{
+				// Jump
+				if(jumpKey)
+				{
+					velocityVector.y = jumpSpeed;
+					// Debug.Log("Jump");
 				}
 			}
+			// 非接地時
+			else
+			{
+				// 重力による自由落下処理
+				velocityVector.y += gravity * Time.fixedDeltaTime;
+			}
+			
+			charaController.Move(velocityVector * Time.fixedDeltaTime);
 		}
 	}
 }

@@ -4,25 +4,27 @@ using UnityEngine;
 
 namespace FPS
 {
-	[RequireComponent(typeof(CharacterController), typeof(AudioSource))]
+	[RequireComponent(typeof(CharacterController), typeof(PlayerMover))]
 	public class PlayerController : MonoBehaviour
 	{
-		private float moveH;
-		private float moveV;
+		public enum PlayerState
+		{
+			Idle, 
+			Walking, 
+			Running, 
+			Jumping
+		}
+
+		private PlayerMover playerMover;
 
 		void Start()
 		{
-
+			playerMover = GetComponent<PlayerMover>();
 		}
 
-		void Update()
+		void FixedUpdate()
 		{
-			moveH = Input.GetAxis("Horizontal");
-			moveV = Input.GetAxis("Vertical");
-			if(moveH != 0 || moveV != 0)
-			{
-				GetComponent<PlayerMover>().Move(moveH, moveV);
-			}
+			playerMover.Move();
 		}
 	}
 }
