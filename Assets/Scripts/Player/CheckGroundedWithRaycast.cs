@@ -1,14 +1,16 @@
-﻿using System.Collections;
+﻿// 参考元
+// https://qiita.com/toRisouP/items/9141f1bbc6f623db5fdd
+// 
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// https://qiita.com/toRisouP/items/9141f1bbc6f623db5fdd
 [RequireComponent(typeof(CharacterController))]
 public class CheckGroundedWithRaycast : MonoBehaviour
 {	
 	private int layer_mask;
 	private Ray ray;
-	private float tolerance;
+	private float tolerance = 1.3f;
 	private bool isGroundedWithRaycast;
 
 	private CharacterController characterController;
@@ -16,17 +18,10 @@ public class CheckGroundedWithRaycast : MonoBehaviour
 	public void Start()
 	{
 		layer_mask = LayerMask.GetMask("Ground");
-		characterController = GetComponent<CharacterController>();
-		
-		// 探索距離
-		/*
-		このクラスをアタッチするオブジェクトのY座標を考慮した上で、
-		Jumpキーに反応するタイミングがベストになる探索距離toleranceを設定する
-		*/
-		tolerance = 1.3f;
+		characterController = GetComponent<CharacterController>();	
 	}
 
-	public bool CheckGrounded()
+	public bool CheckPlayerIsGrounded()
 	{
 		//CharacterControlle.IsGroundedがtrueならRaycastを使わずに判定終了
 		if (characterController.isGrounded)
@@ -42,17 +37,7 @@ public class CheckGroundedWithRaycast : MonoBehaviour
 		//Raycastがhitするかどうかで判定
 		//地面にのみ衝突するようにレイヤを指定する
 		isGroundedWithRaycast = Physics.Raycast(ray, tolerance, layer_mask);
-		// Rayの可視化
-		// Debug.DrawRay(ray.origin, ray.direction, Color.red, tolerance);
-
-		// if(!isGroundedWithRaycast)
-		// {
-		// 	Debug.Log("Can't detected ground");
-		// }
-		// else
-		// {
-		// 	Debug.Log("Raycast detected ground");
-		// }
+		
 		return isGroundedWithRaycast;
 	}
 }
