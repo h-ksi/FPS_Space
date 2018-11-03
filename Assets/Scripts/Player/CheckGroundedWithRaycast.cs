@@ -13,12 +13,11 @@ public class CheckGroundedWithRaycast : MonoBehaviour
 	private float tolerance = 1.3f;
 	private bool isGroundedWithRaycast;
 
-	private CharacterController characterController;
+	[SerializeField]private CharacterController characterController;
 
 	public void Start()
 	{
 		layer_mask = LayerMask.GetMask("Ground");
-		characterController = GetComponent<CharacterController>();	
 	}
 
 	public bool CheckPlayerIsGrounded()

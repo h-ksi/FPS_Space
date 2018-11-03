@@ -5,27 +5,27 @@ using UnityEngine;
 namespace FPS
 {
     [RequireComponent(typeof(PlayerMover))]
+    [RequireComponent(typeof(CheckGroundedWithRaycast))]
 	public class PlayerController : MonoBehaviour
     {
-        private PlayerMover playerMover;
-        private CheckGroundedWithRaycast checkGroundedWithRaycast;
-        private Transform fpsCameraTransform;
+        [SerializeField]private PlayerMover playerMover;
+        [SerializeField]private CheckGroundedWithRaycast checkGroundedWithRaycast;
+        [SerializeField]private Transform fpsCameraTransform;
         private ArgumentsOfMovePlayer argumentsOfMovePlayer;
         
+        private const float DEFAULT_WALK_SPEED = 5f;       
+        private const float RUN_SPEED = 10f;
+
         void Start()
-        {
-            playerMover = GetComponent<PlayerMover>();
-            fpsCameraTransform = transform.GetChild(0).gameObject.transform;
-            checkGroundedWithRaycast = GetComponent<CheckGroundedWithRaycast>();
-            argumentsOfMovePlayer = ArgumentsOfMovePlayer.Singleton;
+        {            
+            argumentsOfMovePlayer = ArgumentsOfMovePlayer.SingletonInstance;
         }
 
         void Update()
         {            
             HandleInput();
-            playerMover.MovePlayer
-            (
-                argumentsOfMovePlayer.FpsCameraTransform, 
+            playerMover.MovePlayer(
+                fpsCameraTransform, 
                 argumentsOfMovePlayer.MoveV, 
                 argumentsOfMovePlayer.MoveH, 
                 argumentsOfMovePlayer.Speed, 
@@ -43,9 +43,6 @@ namespace FPS
             bool rightKey = Input.GetKey(KeyCode.D);
             bool runnableKey = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) ? true : false;
             bool jumpKey = Input.GetKeyDown(KeyCode.Space);
-
-            // fpsCameraTransform
-            argumentsOfMovePlayer.FpsCameraTransform = fpsCameraTransform;
 
             // Vertical direction
             if (forwardKey && !backwardKey)
@@ -78,11 +75,11 @@ namespace FPS
             // Speed
             if(runnableKey)
             {
-                argumentsOfMovePlayer.Speed = argumentsOfMovePlayer.RunSpeed;
+                argumentsOfMovePlayer.Speed = RUN_SPEED;
             }
             else
             {
-                argumentsOfMovePlayer.Speed = argumentsOfMovePlayer.WalkSpeed;
+                argumentsOfMovePlayer.Speed = DEFAULT_WALK_SPEED;
             }
 
             // isGrounded

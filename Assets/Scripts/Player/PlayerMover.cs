@@ -7,22 +7,13 @@ namespace FPS
 	[RequireComponent(typeof(CharacterController))]
 	public class PlayerMover : MonoBehaviour 
 	{
-		private CharacterController charaController;
+		[SerializeField]private CharacterController characterController;
 		private Vector3 velocityVector = Vector3.zero;
+		private const float JUMP_SPEED = 4f;
+		private float gravity = Physics.gravity.y;	//	-9.81;
 
-		[Range(1f, 15f)]
-		private float jumpSpeed = 4f;
-		private float gravity;
-
-		public void Start()
-		{
-			gravity = Physics.gravity.y;	//	-9.81	
-			charaController = GetComponent<CharacterController>();
-		}
-
-		public void MovePlayer
-		(
-			Transform fpsCameraTransform, 
+		public void MovePlayer(
+			Transform fpsCameraTransform,
 			float moveV, 
 			float moveH, 
 			float speed, 
@@ -47,7 +38,7 @@ namespace FPS
 				// Jump
 				if(jumpKey)
 				{
-					velocityVector.y = jumpSpeed;
+					velocityVector.y = JUMP_SPEED;
 				}
 			}
 			// 非接地時
@@ -57,7 +48,7 @@ namespace FPS
 				velocityVector.y += gravity * Time.fixedDeltaTime;
 			}
 			
-			charaController.Move(velocityVector * Time.fixedDeltaTime);
+			characterController.Move(velocityVector * Time.fixedDeltaTime);
 		}
 	}
 }
