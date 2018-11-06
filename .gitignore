@@ -1,4 +1,4 @@
-
+###
 # =============== #
 # Unity generated #
 # =============== #
@@ -7,7 +7,7 @@ Obj/
 UnityGenerated/
 Library/
 # ===================================== #
-# Visual Studio / MonoDevelop generated #
+# Visual Studio / Visual Studio Code / MonoDevelop generated #
 # ===================================== #
 ExportedObj/
 *.svd
@@ -19,6 +19,7 @@ ExportedObj/
 *.user
 *.unityproj
 *.booproj
+.vscode
 # ============ #
 # OS generated #
 # ============ #
@@ -36,3 +37,4 @@ Thumbs.db
 *.log #log files, for some plugins
 *.pyc #python bytecode cache, for some plugins.
 sysinfo.txt #Unity3D Generated File On Crash Reports
+###
