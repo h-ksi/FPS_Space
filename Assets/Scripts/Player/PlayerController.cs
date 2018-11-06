@@ -9,12 +9,17 @@ namespace FPS
 	public class PlayerController : MonoBehaviour
     {
         [SerializeField]private PlayerMover playerMover;
+        [SerializeField]private PlayerCroucher playerCroucher;
         [SerializeField]private CheckGroundedWithRaycast checkGroundedWithRaycast;
         [SerializeField]private Transform fpsCameraTransform;
         private ArgumentsOfMovePlayer argumentsOfMovePlayer;
         
         private const float DEFAULT_WALK_SPEED = 5f;       
         private const float RUN_SPEED = 10f;
+        private const float CROUCH_WALK_SPEED = 3f;
+        private const float CROUCH_RUN_SPEED = 6f;
+
+        
 
         void Start()
         {            
@@ -43,6 +48,7 @@ namespace FPS
             bool rightKey = Input.GetKey(KeyCode.D);
             bool runnableKey = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) ? true : false;
             bool jumpKey = Input.GetKeyDown(KeyCode.Space);
+            bool crouchKey = Input.GetKey(KeyCode.C);
 
             // Vertical direction
             if (forwardKey && !backwardKey)
@@ -73,13 +79,21 @@ namespace FPS
             }
 
             // Speed
-            if(runnableKey)
+            if(!runnableKey && !crouchKey)
+            {
+                argumentsOfMovePlayer.Speed = DEFAULT_WALK_SPEED;
+            }
+            else if(runnableKey && !crouchKey)
             {
                 argumentsOfMovePlayer.Speed = RUN_SPEED;
             }
+            else if(!runnableKey && crouchKey)
+            {
+                argumentsOfMovePlayer.Speed = CROUCH_WALK_SPEED;
+            }
             else
             {
-                argumentsOfMovePlayer.Speed = DEFAULT_WALK_SPEED;
+                argumentsOfMovePlayer.Speed = CROUCH_RUN_SPEED;
             }
 
             // isGrounded
@@ -94,6 +108,9 @@ namespace FPS
             {
                 argumentsOfMovePlayer.JumpKey = false;
             }
+
+            // Crouch
+            playerCroucher.CrouchPlayer(crouchKey);
         }
     }
 }
