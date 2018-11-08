@@ -14,6 +14,6 @@ namespace FPS
         public float MoveH{get; set;}
         public float Speed{get; set;}
         public bool IsGrounded{get; set;}
-        public bool JumpKey{get; set;}
+        public bool isJumpCommandActive{get; set;}
     }
 }

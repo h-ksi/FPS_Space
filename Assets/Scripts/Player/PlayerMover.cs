@@ -9,7 +9,7 @@ namespace FPS
 	{
 		[SerializeField]private CharacterController characterController;
 		private Vector3 velocityVector = Vector3.zero;
-		private const float JUMP_SPEED = 4f;
+		private const float JUMP_SPEED = 3.5f;
 		private float gravity = Physics.gravity.y;	//	-9.81;
 
 		public void MovePlayer(
@@ -18,7 +18,7 @@ namespace FPS
 			float moveH, 
 			float speed, 
 			bool isGrounded, 
-			bool jumpKey
+			bool isJumpCommandActive
 		)
 		{		
 			// FPSCamera単位方向ベクトル
@@ -36,7 +36,7 @@ namespace FPS
 			if (isGrounded)
 			{
 				// Jump
-				if(jumpKey)
+				if(isJumpCommandActive)
 				{
 					velocityVector.y = JUMP_SPEED;
 				}

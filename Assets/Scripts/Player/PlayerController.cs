@@ -6,56 +6,56 @@ namespace FPS
 {
     [RequireComponent(typeof(PlayerMover))]
     [RequireComponent(typeof(CheckGroundedWithRaycast))]
-	public class PlayerController : MonoBehaviour
+    public class PlayerController : MonoBehaviour
     {
-        [SerializeField]private PlayerMover playerMover;
-        [SerializeField]private PlayerCroucher playerCroucher;
-        [SerializeField]private CheckGroundedWithRaycast checkGroundedWithRaycast;
-        [SerializeField]private Transform fpsCameraTransform;
+        [SerializeField] private PlayerMover playerMover;
+        [SerializeField] private PlayerCroucher playerCroucher;
+        [SerializeField] private CheckGroundedWithRaycast checkGroundedWithRaycast;
+        [SerializeField] private Transform fpsCameraTransform;
         private ArgumentsOfMovePlayer argumentsOfMovePlayer;
-        
-        private const float DEFAULT_WALK_SPEED = 5f;       
+
+        // Constants
+        private const float DEFAULT_WALK_SPEED = 5f;
         private const float RUN_SPEED = 10f;
         private const float CROUCH_WALK_SPEED = 3f;
         private const float CROUCH_RUN_SPEED = 6f;
 
-        
 
         void Start()
-        {            
+        {
             argumentsOfMovePlayer = ArgumentsOfMovePlayer.SingletonInstance;
         }
 
         void Update()
-        {            
+        {
             HandleInput();
             playerMover.MovePlayer(
-                fpsCameraTransform, 
-                argumentsOfMovePlayer.MoveV, 
-                argumentsOfMovePlayer.MoveH, 
-                argumentsOfMovePlayer.Speed, 
-                argumentsOfMovePlayer.IsGrounded, 
-                argumentsOfMovePlayer.JumpKey
+                fpsCameraTransform,
+                argumentsOfMovePlayer.MoveV,
+                argumentsOfMovePlayer.MoveH,
+                argumentsOfMovePlayer.Speed,
+                argumentsOfMovePlayer.IsGrounded,
+                argumentsOfMovePlayer.isJumpCommandActive
             );
         }
 
         public void HandleInput()
-        {
+        {            
             // Keys
-            bool forwardKey = Input.GetKey (KeyCode.W);
-            bool backwardKey = Input.GetKey(KeyCode.S);
-            bool leftKey = Input.GetKey(KeyCode.A);
-            bool rightKey = Input.GetKey(KeyCode.D);
-            bool runnableKey = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) ? true : false;
-            bool jumpKey = Input.GetKeyDown(KeyCode.Space);
-            bool crouchKey = Input.GetKey(KeyCode.C);
+            bool isMoveForwardCommandActive = Input.GetKey(KeyCode.W);
+            bool isMoveBackwardCommandActive = Input.GetKey(KeyCode.S);
+            bool isMoveLeftCommandActive = Input.GetKey(KeyCode.A);
+            bool isMoveRightCommandActive = Input.GetKey(KeyCode.D);
+            bool isRunnableCommandActive = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) ? true : false;
+            bool isJumpCommandActive = Input.GetKeyDown(KeyCode.Space);
+            bool isCrouchCommandActive = Input.GetKey(KeyCode.C);
 
             // Vertical direction
-            if (forwardKey && !backwardKey)
+            if (isMoveForwardCommandActive && !isMoveBackwardCommandActive)
             {
                 argumentsOfMovePlayer.MoveV = 1f;
             }
-            else if(!forwardKey && backwardKey)
+            else if (!isMoveForwardCommandActive && isMoveBackwardCommandActive)
             {
                 argumentsOfMovePlayer.MoveV = -1f;
             }
@@ -65,11 +65,11 @@ namespace FPS
             }
 
             // Horizontal direction
-            if (!leftKey && rightKey)
+            if (!isMoveLeftCommandActive && isMoveRightCommandActive)
             {
                 argumentsOfMovePlayer.MoveH = 1f;
             }
-            else if(leftKey && !rightKey)
+            else if (isMoveLeftCommandActive && !isMoveRightCommandActive)
             {
                 argumentsOfMovePlayer.MoveH = -1f;
             }
@@ -79,15 +79,15 @@ namespace FPS
             }
 
             // Speed
-            if(!runnableKey && !crouchKey)
+            if (!isRunnableCommandActive && !isCrouchCommandActive)
             {
                 argumentsOfMovePlayer.Speed = DEFAULT_WALK_SPEED;
             }
-            else if(runnableKey && !crouchKey)
+            else if (isRunnableCommandActive && !isCrouchCommandActive)
             {
                 argumentsOfMovePlayer.Speed = RUN_SPEED;
             }
-            else if(!runnableKey && crouchKey)
+            else if (!isRunnableCommandActive && isCrouchCommandActive)
             {
                 argumentsOfMovePlayer.Speed = CROUCH_WALK_SPEED;
             }
@@ -100,17 +100,17 @@ namespace FPS
             argumentsOfMovePlayer.IsGrounded = checkGroundedWithRaycast.CheckPlayerIsGrounded();
 
             // Jump
-            if(jumpKey)
+            if (isJumpCommandActive)
             {
-                argumentsOfMovePlayer.JumpKey = true;
+                argumentsOfMovePlayer.isJumpCommandActive = true;
             }
             else
             {
-                argumentsOfMovePlayer.JumpKey = false;
+                argumentsOfMovePlayer.isJumpCommandActive = false;
             }
 
             // Crouch
-            playerCroucher.CrouchPlayer(crouchKey);
+            playerCroucher.HandlePlayerCrouch(isCrouchCommandActive);
         }
     }
 }
