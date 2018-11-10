@@ -6,40 +6,45 @@ namespace FPS
 {
     public class PlayerCroucher : MonoBehaviour
     {
-        [SerializeField] private CharacterController characterController;
-        [SerializeField] private Transform fpsCameraTransform;
+        [SerializeField] private PlayerController _playerController;
+        [SerializeField] private CharacterController _characterController;
+        [SerializeField] private Transform _fpsCameraTransform;
 
         private const float CROUCH_CAMERA_HEIGHT = 0f;  // しゃがんだときのFPSCamera Transform.localPositionのY座標
         private const float NORMAL_CAMERA_HEIGHT = 0.5f;  // 通常時のFPSCamera Transform.localPositionのY座標
         private const float CROUCH_CHARACON_HEIGHT = 1.3f;  // しゃがんだときのCharacterController.height
         private const float NORMAL_CHARACON_HEIGHT = 1.8f;  // 通常時のCharacterController.height
 
-        private bool isPlayerCrouching = false;
+        private bool _isPlayerCrouching = false;
+        public bool IsPlayerCrouching { get { return _isPlayerCrouching; } }
 
-        public void HandlePlayerCrouch(bool isCrouchCommandActive)
+        void Update()
         {
-            if (isCrouchCommandActive && !isPlayerCrouching)
+            if (_playerController.IsCrouchCommandActive)
             {
-                CrouchPlayer();
-            }
-            // Don't crouch
-            else if (!isCrouchCommandActive && isPlayerCrouching)
-            {
-                StandPlayer();
+                if (!_isPlayerCrouching)
+                {
+                    CrouchPlayer();
+                }
+                else if (_isPlayerCrouching)
+                {
+                    StandPlayer();
+                }
             }
         }
+
         private void CrouchPlayer()
         {
-            fpsCameraTransform.localPosition = new Vector3(0, CROUCH_CAMERA_HEIGHT, 0);
-            characterController.height = CROUCH_CHARACON_HEIGHT;
-            isPlayerCrouching = true;
+            _fpsCameraTransform.localPosition = new Vector3(0, CROUCH_CAMERA_HEIGHT, 0);
+            _characterController.height = CROUCH_CHARACON_HEIGHT;
+            _isPlayerCrouching = true;
         }
 
         private void StandPlayer()
         {
-            fpsCameraTransform.localPosition = new Vector3(0, NORMAL_CAMERA_HEIGHT, 0);
-            characterController.height = NORMAL_CHARACON_HEIGHT;
-            isPlayerCrouching = false;
+            _fpsCameraTransform.localPosition = new Vector3(0, NORMAL_CAMERA_HEIGHT, 0);
+            _characterController.height = NORMAL_CHARACON_HEIGHT;
+            _isPlayerCrouching = false;
         }
     }
 }
