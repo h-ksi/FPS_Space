@@ -4,37 +4,37 @@ using UnityEngine;
 
 namespace FPS
 {
-	public class CameraController : MonoBehaviour
-	{
-		[Range(0.1f, 10f)]
-		private float lookSensitivity = 5f;
-		[Range(0.1f, 1f)]
-		private float lookSmooth = 0.1f;
+    public class CameraController : MonoBehaviour
+    {
+        [Range(0.1f, 10f)]
+        private float _lookSensitivity = 5f;
+        [Range(0.1f, 1f)]
+        private float _lookSmooth = 0.1f;
 
-		private Vector2 MinMaxAngle = new Vector2(-75, 75);
+        private Vector2 _minMaxAngle = new Vector2(-75, 75);
 
-		private float yRot;
-		private float xRot;
+        private float _yRot;
+        private float _xRot;
 
-		private float currentYRot;
-		private float currentXRot;
+        private float _currentYRot;
+        private float _currentXRot;
 
-		private float yRotVelocity;
-		private float xRotVelocity;
+        private float _yRotVelocity;
+        private float _xRotVelocity;
 
-		void Update()
-		{
-			yRot += Input.GetAxis("Mouse X") * lookSensitivity;
-			xRot -= Input.GetAxis("Mouse Y") * lookSensitivity;
+        void Update()
+        {
+            _yRot += Input.GetAxis("Mouse X") * _lookSensitivity;
+            _xRot -= Input.GetAxis("Mouse Y") * _lookSensitivity;
 
-			// Clampは与えられた最小float値と最大float値の範囲に値を制限する
-			xRot = Mathf.Clamp(xRot, MinMaxAngle.x, MinMaxAngle.y);
+            // Clampは与えられた最小float値と最大float値の範囲に値を制限する
+            _xRot = Mathf.Clamp(_xRot, _minMaxAngle.x, _minMaxAngle.y);
 
-			currentXRot = Mathf.SmoothDamp(currentXRot, xRot, ref xRotVelocity, lookSmooth);
-			currentYRot = Mathf.SmoothDamp(currentYRot, yRot, ref yRotVelocity, lookSmooth);
+            _currentXRot = Mathf.SmoothDamp(_currentXRot, _xRot, ref _xRotVelocity, _lookSmooth);
+            _currentYRot = Mathf.SmoothDamp(_currentYRot, _yRot, ref _yRotVelocity, _lookSmooth);
 
-			transform.rotation = Quaternion.Euler(currentXRot, currentYRot, 0);
-		}		
+            transform.rotation = Quaternion.Euler(_currentXRot, _currentYRot, 0);
+        }
 
-	}
+    }
 }
