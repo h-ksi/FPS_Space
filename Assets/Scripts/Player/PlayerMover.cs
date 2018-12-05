@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UniRx;
+using UniRx.Triggers;
 
 namespace FPS
 {
@@ -15,110 +18,113 @@ namespace FPS
         private Vector3 _velocityVector = Vector3.zero;
 
         // Constants
-        private const float DEFAULT_WALK_SPEED = 5f;
-        private const float RUN_SPEED = 8f;
-        private const float CROUCH_WALK_SPEED = 3f;
-        private const float CROUCH_RUN_SPEED = 5f;
+        private const float DEFAULT_WALK_SPEED = 10f;
+        private const float RUN_SPEED = 16f;
+        private const float CROUCH_WALK_SPEED = 8f;
+        private const float CROUCH_RUN_SPEED = 12f;
         private const float JUMP_SPEED = 3f;
-        private const float GRAVITY = -9.81f;
+        private const float GRAVITY = -15f;
 
         private float _moveV;
         private float _moveH;
         private float _speed;
 
-        // Vertical direction
-        void Update()
+        void Start()
         {
-            MovePlayer();
+            // 前後移動コマンドで_moveVを更新
+            Observable.CombineLatest(
+                    _playerController.IsMoveForwardCommandActive,
+                    _playerController.IsMoveBackwardCommandActive)
+                .Subscribe(_boolList =>
+                {
+                    _moveV = SetValueOfMoveVH(_boolList[0], _boolList[1]);
+                });
+
+            // 左右移動コマンドで_moveHを更新
+            Observable.CombineLatest(
+                    _playerController.IsMoveRightCommandActive,
+                    _playerController.IsMoveLeftCommandActive)
+                .Subscribe(_boolList =>
+                {
+                    _moveH = SetValueOfMoveVH(_boolList[0], _boolList[1]);
+                });
+
+            // Runコマンド、しゃがみコマンドで_speedを更新
+            Observable.CombineLatest(
+                    _playerController.IsRunnableCommandActive,
+                    _playerController.IsCrouchCommandActive)
+                .Subscribe(_boolList =>
+                {
+                    _speed = SetValueOfSpeed(_boolList[0], _boolList[1]);
+                });
+
+            // Jumpコマンドで速度ベクトルのY成分を更新
+            _playerController.IsJumpCommandActive
+                .Skip(1)
+                .Where(_ => _checkGroundedWithRaycast.CheckPlayerIsGrounded())
+                .Subscribe(_ => _velocityVector.y = JUMP_SPEED);
+
+            // 非接地時は毎フレーム速度ベクトルのY成分を減少させる
+            this.UpdateAsObservable()
+                .Where(_ => !_checkGroundedWithRaycast.CheckPlayerIsGrounded())
+                .Subscribe(_ =>
+                {
+                    _velocityVector.y += GRAVITY * Time.fixedDeltaTime;
+                });
+
+            // Player移動
+            this.UpdateAsObservable()
+                // 接地時かつすべてのPlayer移動コマンドがfalseのとき、MovePlayer()を実行しない
+                .SkipWhile(_ =>
+                    (_checkGroundedWithRaycast.CheckPlayerIsGrounded()) &&
+                    (_playerController.RPArrayNeededForMovePlayer.All(x => x.Value = false)))
+                .Subscribe(_ => MovePlayer());
         }
 
         private void MovePlayer()
         {
-            InputFromPlayerController();
-
-            // FPSCamera単位方向ベクトル
-            Vector3 _fpsCameraDirection = _fpsCameraTransform.forward * _moveV + _fpsCameraTransform.right * _moveH;
-            if (_fpsCameraDirection != Vector3.zero)
-            {
-                _fpsCameraDirection.Normalize();
-            }
-
-            // 速度ベクトルの方向をFPSCamera方向に設定
-            _velocityVector.x = _fpsCameraDirection.x * _speed;
-            _velocityVector.z = _fpsCameraDirection.z * _speed;
-
-            // 接地時
-            if (_checkGroundedWithRaycast.CheckPlayerIsGrounded())
-            {
-                // Jump
-                if (_playerController.IsJumpCommandActive)
-                {
-                    _velocityVector.y = JUMP_SPEED;
-                }
-            }
-            // 非接地時
-            else
-            {
-                // 重力による自由落下処理
-                _velocityVector.y += GRAVITY * Time.fixedDeltaTime;
-            }
+            Vector3 _moveDirection = (_fpsCameraTransform.forward * _moveV + _fpsCameraTransform.right * _moveH).GetHorizontalDirection();
+            _velocityVector.x = _speed * _moveDirection.x;
+            _velocityVector.z = _speed * _moveDirection.z;
 
             _characterController.Move(_velocityVector * Time.fixedDeltaTime);
         }
 
-        private void InputFromPlayerController()
+        private float SetValueOfMoveVH(bool a, bool b)
         {
-            bool _isMoveForwardCommandActive = _playerController.IsMoveForwardCommandActive;
-            bool _isMoveBackwardCommandActive = _playerController.IsMoveBackwardCommandActive;
-            bool _isMoveLeftCommandActive = _playerController.IsMoveLeftCommandActive;
-            bool _isMoveRightCommandActive = _playerController.IsMoveRightCommandActive;
-            bool _isRunnableCommandActive = _playerController.IsRunnableCommandActive;
-            bool _isCrouchCommandActive = _playerController.IsCrouchCommandActive;
-
-            if (_isMoveForwardCommandActive && !_isMoveBackwardCommandActive)
+            if (a && !b)
             {
-                _moveV = 1f;
+                return 1f;
             }
-            else if (!_isMoveForwardCommandActive && _isMoveBackwardCommandActive)
+            else if (!a && b)
             {
-                _moveV = -1f;
+                return -1f;
             }
             else
             {
-                _moveV = 0;
+                return 0;
             }
+        }
 
-            // Horizontal direction
-            if (!_isMoveLeftCommandActive && _isMoveRightCommandActive)
+        private float SetValueOfSpeed(bool a, bool b)
+        {
+            if (!a && !b)
             {
-                _moveH = 1f;
+                return DEFAULT_WALK_SPEED;
             }
-            else if (_isMoveLeftCommandActive && !_isMoveRightCommandActive)
+            else if (a && !b)
             {
-                _moveH = -1f;
+                return RUN_SPEED;
+            }
+            else if (!a && b)
+            {
+                return CROUCH_WALK_SPEED;
             }
             else
             {
-                _moveH = 0;
-            }
-
-            // Speed
-            if (!_isRunnableCommandActive && !_isCrouchCommandActive)
-            {
-                _speed = DEFAULT_WALK_SPEED;
-            }
-            else if (_isRunnableCommandActive && !_isCrouchCommandActive)
-            {
-                _speed = RUN_SPEED;
-            }
-            else if (!_isRunnableCommandActive && _isCrouchCommandActive)
-            {
-                _speed = CROUCH_WALK_SPEED;
-            }
-            else
-            {
-                _speed = CROUCH_RUN_SPEED;
+                return CROUCH_RUN_SPEED;
             }
         }
     }
 }
+

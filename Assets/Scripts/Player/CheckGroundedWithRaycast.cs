@@ -4,21 +4,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UniRx;
+using UniRx.Triggers;
 
 [RequireComponent(typeof(CharacterController))]
 public class CheckGroundedWithRaycast : MonoBehaviour
 {
-    private int _layer_mask;
+    [SerializeField] private LayerMask _groundLayerMask;
     private Ray _ray;
     private float _tolerance = 1.3f;
     private bool _isGroundedWithRaycast;
-
     [SerializeField] private CharacterController _characterController;
-
-    public void Start()
-    {
-        _layer_mask = LayerMask.GetMask("Ground");
-    }
 
     public bool CheckPlayerIsGrounded()
     {
@@ -35,7 +31,7 @@ public class CheckGroundedWithRaycast : MonoBehaviour
 
         //Raycastがhitするかどうかで判定
         //地面にのみ衝突するようにレイヤを指定する
-        _isGroundedWithRaycast = Physics.Raycast(_ray, _tolerance, _layer_mask);
+        _isGroundedWithRaycast = Physics.Raycast(_ray, _tolerance, _groundLayerMask.value);
 
         return _isGroundedWithRaycast;
     }
