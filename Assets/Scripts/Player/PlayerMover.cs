@@ -10,12 +10,11 @@ namespace FPS
     [RequireComponent(typeof(CharacterController))]
     public class PlayerMover : MonoBehaviour
     {
+        [SerializeField] private CameraController _cameraController;
         [SerializeField] private PlayerController _playerController;
         [SerializeField] private CharacterController _characterController;
         [SerializeField] private CheckGroundedWithRaycast _checkGroundedWithRaycast;
-        [SerializeField] private Transform _fpsCameraTransform;
         [SerializeField] private PlayerCroucher _playerCroucher;
-        private Vector3 _velocityVector = Vector3.zero;
 
         // Constants
         private const float DEFAULT_WALK_SPEED = 10f;
@@ -23,11 +22,13 @@ namespace FPS
         private const float CROUCH_WALK_SPEED = 8f;
         private const float CROUCH_RUN_SPEED = 12f;
         private const float JUMP_SPEED = 3f;
-        private const float GRAVITY = -15f;
+        private const float GRAVITY = -20f;
 
-        private float _moveV;
-        private float _moveH;
-        private float _speed;
+        private Vector3 _moveDirection = Vector3.zero;
+        private Vector3 _velocityVector = Vector3.zero;
+        private float _moveV;   // 前進：1   後退：-1   他：0
+        private float _moveH;   // 右移動：1    左移動：-1   他：0
+        private float _speed;   // 水平面移動速度
 
         void Start()
         {
@@ -83,20 +84,21 @@ namespace FPS
 
         private void MovePlayer()
         {
-            Vector3 _moveDirection = (_fpsCameraTransform.forward * _moveV + _fpsCameraTransform.right * _moveH).GetHorizontalDirection();
+            _moveDirection = _cameraController.FpsCameraHorizontalDirection.Value * _moveV + Vector3.Cross(_cameraController.FpsCameraHorizontalDirection.Value, Vector3.down) * _moveH;
+
             _velocityVector.x = _speed * _moveDirection.x;
             _velocityVector.z = _speed * _moveDirection.z;
 
             _characterController.Move(_velocityVector * Time.fixedDeltaTime);
         }
 
-        private float SetValueOfMoveVH(bool a, bool b)
+        private float SetValueOfMoveVH(bool _forwardOrRight, bool _backwardOrLeft)
         {
-            if (a && !b)
+            if (_forwardOrRight && !_backwardOrLeft)
             {
                 return 1f;
             }
-            else if (!a && b)
+            else if (!_forwardOrRight && _backwardOrLeft)
             {
                 return -1f;
             }
@@ -106,17 +108,17 @@ namespace FPS
             }
         }
 
-        private float SetValueOfSpeed(bool a, bool b)
+        private float SetValueOfSpeed(bool _run, bool _crouch)
         {
-            if (!a && !b)
+            if (!_run && !_crouch)
             {
                 return DEFAULT_WALK_SPEED;
             }
-            else if (a && !b)
+            else if (_run && !_crouch)
             {
                 return RUN_SPEED;
             }
-            else if (!a && b)
+            else if (!_run && _crouch)
             {
                 return CROUCH_WALK_SPEED;
             }
@@ -127,4 +129,3 @@ namespace FPS
         }
     }
 }
-
