@@ -23,6 +23,7 @@ public class GunShooter : MonoBehaviour
 	void Start ()
 	{
 		_canShoot = true;
+
 	}
 
 	// Update is called once per frame
@@ -56,8 +57,7 @@ public class GunShooter : MonoBehaviour
 		if (Input.GetMouseButtonDown (0) && _canShoot)
 		{
 			// shot interval
-			StartCoroutine ("WaitShotInterval");
-
+			StartCoroutine (WaitShotInterval ());
 			// 銃弾
 			_bulletPool.ShootBullet ();
 			// 火花パーティクル
