@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using UniRx;
 using UnityEngine;
 
 public class GunShooter : MonoBehaviour
@@ -23,7 +25,6 @@ public class GunShooter : MonoBehaviour
 	void Start ()
 	{
 		_canShoot = true;
-
 	}
 
 	// Update is called once per frame
@@ -57,7 +58,9 @@ public class GunShooter : MonoBehaviour
 		if (Input.GetMouseButtonDown (0) && _canShoot)
 		{
 			// shot interval
-			StartCoroutine (WaitShotInterval ());
+			_canShoot = false;
+			Observable.Timer (TimeSpan.FromSeconds (SHOT_INTERVAL))
+				.Subscribe (_ => _canShoot = true);
 			// 銃弾
 			_bulletPool.ShootBullet ();
 			// 火花パーティクル
@@ -82,12 +85,5 @@ public class GunShooter : MonoBehaviour
 				}
 			}
 		}
-	}
-
-	IEnumerator WaitShotInterval ()
-	{
-		_canShoot = false;
-		yield return new WaitForSeconds (SHOT_INTERVAL);
-		_canShoot = true;
 	}
 }
