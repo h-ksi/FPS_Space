@@ -1,13 +1,11 @@
 ﻿using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UniRx;
 using UniRx.Triggers;
+using UnityEngine;
 
 namespace FPS
 {
-    [RequireComponent(typeof(CharacterController))]
+    [RequireComponent (typeof (CharacterController))]
     public class PlayerMover : MonoBehaviour
     {
         [SerializeField] private CameraController _cameraController;
@@ -26,73 +24,73 @@ namespace FPS
 
         private Vector3 _moveDirection = Vector3.zero;
         private Vector3 _velocityVector = Vector3.zero;
-        private float _moveV;   // 前進：1   後退：-1   他：0
-        private float _moveH;   // 右移動：1    左移動：-1   他：0
-        private float _speed;   // 水平面移動速度
+        private float _moveV; // 前進：1   後退：-1   他：0
+        private float _moveH; // 右移動：1    左移動：-1   他：0
+        private float _speed; // 水平面移動速度
 
-        void Start()
+        void Start ()
         {
             // 前後移動コマンドで_moveVを更新
-            Observable.CombineLatest(
+            Observable.CombineLatest (
                     _playerController.IsMoveForwardCommandActive,
                     _playerController.IsMoveBackwardCommandActive)
-                .Subscribe(_boolList =>
+                .Subscribe (_boolList =>
                 {
-                    _moveV = SetValueOfMoveVH(_boolList[0], _boolList[1]);
+                    _moveV = SetValueOfMoveVH (_boolList[0], _boolList[1]);
                 });
 
             // 左右移動コマンドで_moveHを更新
-            Observable.CombineLatest(
+            Observable.CombineLatest (
                     _playerController.IsMoveRightCommandActive,
                     _playerController.IsMoveLeftCommandActive)
-                .Subscribe(_boolList =>
+                .Subscribe (_boolList =>
                 {
-                    _moveH = SetValueOfMoveVH(_boolList[0], _boolList[1]);
+                    _moveH = SetValueOfMoveVH (_boolList[0], _boolList[1]);
                 });
 
             // Runコマンド、しゃがみコマンドで_speedを更新
-            Observable.CombineLatest(
+            Observable.CombineLatest (
                     _playerController.IsRunnableCommandActive,
                     _playerController.IsCrouchCommandActive)
-                .Subscribe(_boolList =>
+                .Subscribe (_boolList =>
                 {
-                    _speed = SetValueOfSpeed(_boolList[0], _boolList[1]);
+                    _speed = SetValueOfSpeed (_boolList[0], _boolList[1]);
                 });
 
             // Jumpコマンドで速度ベクトルのY成分を更新
             _playerController.IsJumpCommandActive
-                .Skip(1)
-                .Where(_ => _checkGroundedWithRaycast.CheckPlayerIsGrounded())
-                .Subscribe(_ => _velocityVector.y = JUMP_SPEED);
+                .Skip (1)
+                .Where (_ => _checkGroundedWithRaycast.CheckPlayerIsGrounded ())
+                .Subscribe (_ => _velocityVector.y = JUMP_SPEED);
 
             // 非接地時は毎フレーム速度ベクトルのY成分を減少させる
-            this.UpdateAsObservable()
-                .Where(_ => !_checkGroundedWithRaycast.CheckPlayerIsGrounded())
-                .Subscribe(_ =>
+            this.UpdateAsObservable ()
+                .Where (_ => !_checkGroundedWithRaycast.CheckPlayerIsGrounded ())
+                .Subscribe (_ =>
                 {
                     _velocityVector.y += GRAVITY * Time.fixedDeltaTime;
                 });
 
             // Player移動
-            this.UpdateAsObservable()
+            this.UpdateAsObservable ()
                 // 接地時かつすべてのPlayer移動コマンドがfalseのとき、MovePlayer()を実行しない
-                .SkipWhile(_ =>
-                    (_checkGroundedWithRaycast.CheckPlayerIsGrounded()) &&
-                    (_playerController.RPArrayNeededForMovePlayer.All(x => x.Value = false)))
-                .Subscribe(_ => MovePlayer());
+                .SkipWhile (_ =>
+                    (_checkGroundedWithRaycast.CheckPlayerIsGrounded ()) &&
+                    (_playerController.ArrayNeededForMovePlayerRP.All (x => x.Value = false)))
+                .Subscribe (_ => MovePlayer ());
         }
 
-        private void MovePlayer()
+        private void MovePlayer ()
         {
-            _moveDirection = _cameraController.FpsCameraHorizontalDirection.Value * _moveV + Vector3.Cross(_cameraController.FpsCameraHorizontalDirection.Value, Vector3.down) * _moveH;
+            _moveDirection = _cameraController.FpsCameraHorizontalDirection.Value * _moveV + Vector3.Cross (_cameraController.FpsCameraHorizontalDirection.Value, Vector3.down) * _moveH;
 
             _velocityVector.x = _speed * _moveDirection.x;
             _velocityVector.z = _speed * _moveDirection.z;
 
-            _characterController.Move(_velocityVector * Time.fixedDeltaTime);
+            _characterController.Move (_velocityVector * Time.fixedDeltaTime);
         }
 
-        private float SetValueOfMoveVH(bool _forwardOrRight, bool _backwardOrLeft)
+        private float SetValueOfMoveVH (bool _forwardOrRight, bool _backwardOrLeft)
         {
             if (_forwardOrRight && !_backwardOrLeft)
             {
@@ -108,7 +106,7 @@ namespace FPS
             }
         }
 
-        private float SetValueOfSpeed(bool _run, bool _crouch)
+        private float SetValueOfSpeed (bool _run, bool _crouch)
         {
             if (!_run && !_crouch)
             {
