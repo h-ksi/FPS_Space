@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UniRx;
+using UniRx.Triggers;
 
 namespace FPS
 {
@@ -18,19 +20,21 @@ namespace FPS
         private bool _isPlayerCrouching = false;
         public bool IsPlayerCrouching { get { return _isPlayerCrouching; } }
 
-        void Update()
+        void Start()
         {
-            if (_playerController.IsCrouchCommandActive)
-            {
-                if (!_isPlayerCrouching)
+            _playerController.IsCrouchCommandActive
+                .Where(x => x)
+                .Subscribe(_ =>
                 {
-                    CrouchPlayer();
-                }
-                else if (_isPlayerCrouching)
-                {
-                    StandPlayer();
-                }
-            }
+                    if (!_isPlayerCrouching)
+                    {
+                        CrouchPlayer();
+                    }
+                    else if (_isPlayerCrouching)
+                    {
+                        StandPlayer();
+                    }
+                });
         }
 
         private void CrouchPlayer()
