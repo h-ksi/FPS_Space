@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using UniRx;
 
-public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
+public class ObjectPool<T> : IDisposable where T : UnityEngine.Component
 {
-  bool isDisposed = false;
-
   Queue<T> pool;
   Stack<T> trash;
   List<T> returnTimerList;
+
+  bool isDisposed = false;
 
   protected T poolObject;
   protected int initialPoolSize;
@@ -26,11 +25,7 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
   /// </summary>
   public int PoolCount
   {
-    get
-    {
-      if (pool == null) return 0;
-      return pool.Count;
-    }
+    get { return pool.Count; }
   }
 
   /// <summary>
@@ -38,11 +33,7 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
   /// </summary>
   public int TrashCount
   {
-    get
-    {
-      if (trash == null) return 0;
-      return trash.Count;
-    }
+    get { return trash.Count; }
   }
 
   /// <summary>
@@ -50,24 +41,26 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
   /// </summary>
   public int MaxPoolSize
   {
-    get
-    {
-      return maxPoolSize;
-    }
+    get { return maxPoolSize; }
   }
 
   /// <summary>
   /// Destructor.
   /// </summary>
-  ~GenericObjectPool()
+  ~ObjectPool()
   {
-    Dispose(false);
+    if (!isDisposed)
+    {
+      Dispose(false);
+
+      isDisposed = true;
+    }
   }
 
   /// <summary>
   /// Constructor.
   /// </summary>
-  public GenericObjectPool(T poolObject, int initialPoolSize = 1, int maxPoolSize = int.MaxValue, Transform root = null, float timeUntilReturn = 0, int remainCount = 0)
+  public ObjectPool(T poolObject, int initialPoolSize = 1, int maxPoolSize = int.MaxValue, Transform root = null, float timeUntilReturn = 0, int remainCount = 0)
   {
     if (initialPoolSize < 1)
       throw new ArgumentOutOfRangeException("initialPoolSize must be larger than 0");
@@ -85,7 +78,7 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
     trash = new Stack<T>();
     returnTimerList = new List<T>();
 
-    PreloadPerFrame(initialPoolSize).Subscribe();
+    LoadPerFrame(initialPoolSize);
   }
 
   /// <summary>
@@ -94,7 +87,9 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
   public T Pull()
   {
     if (isDisposed) throw new ObjectDisposedException("ObjectPool was already disposed.");
+    if (pool == null) pool = new Queue<T>();
     if (trash == null) trash = new Stack<T>();
+    if (returnTimerList == null) returnTimerList = new List<T>();
 
     T obj;
     // In the case that TrashCount reaches the upper limit
@@ -143,9 +138,15 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
   /// <summary>
   /// Create instance of T object.
   /// </summary>
-  protected T CreateInstance()
+  protected virtual T CreateInstance()
   {
-    T newObject = Object.Instantiate(poolObject as Object) as T;
+    if (root == null)
+    {
+      GameObject clonesRoot = new GameObject("Clones");
+      root = clonesRoot.transform;
+    }
+
+    T newObject = Object.Instantiate(poolObject as Object, root) as T;
     OnCreateInstance(newObject);
     return newObject;
   }
@@ -171,13 +172,7 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
   /// </summary>
   protected virtual void OnCreateInstance(T instance)
   {
-    if (root == null)
-    {
-      GameObject bulletsRoot = new GameObject("Clones");
-      root = bulletsRoot.transform;
-    }
 
-    instance.gameObject.transform.SetParent(root);
   }
 
   /// <summary>
@@ -217,7 +212,7 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
   }
 
   /// <summary>
-  /// Called when clear or disposed, useful for destroy instance or other finalize method.
+  /// Clear collection items.
   /// </summary>
   public void Clear()
   {
@@ -254,66 +249,48 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
   }
 
   /// <summary>
-  ///  Prepare pool in advance.
+  ///  Load pool objects every frame until it reaches a specific amount.
   /// </summary>
-  /// <param name="preloadCount">Count of generated instances in the end.</param>
+  /// <param name="loadCount">Required count of instances.</param>
   /// <param name="countPerFrame">Count of generated instances per frame.</param>
-  public IObservable<Unit> PreloadPerFrame(int preloadCount, int countPerFrame = 1)
+  public void LoadPerFrame(int loadCount, int countPerFrame = 1)
   {
-    if (pool == null)
-      pool = new Queue<T>(preloadCount);
-
-    return Observable.FromMicroCoroutine<Unit>((observer, cancel) => PreloadCore(preloadCount, countPerFrame, observer, cancel));
+    Observable.FromMicroCoroutine(_ => LoadPerFrameCore(loadCount, countPerFrame)).Subscribe();
   }
 
-  IEnumerator PreloadCore(int preloadCount, int countPerFrame, IObserver<Unit> observer, CancellationToken cancellationToken)
+  IEnumerator LoadPerFrameCore(int loadCount, int countPerFrame)
   {
-    while (PoolCount < preloadCount && !cancellationToken.IsCancellationRequested)
+    while (PoolCount < loadCount)
     {
-      int requireCount = preloadCount - PoolCount;
+      int requireCount = loadCount - PoolCount;
       if (requireCount <= 0) break;
 
       int createCount = Math.Min(requireCount, countPerFrame);
 
       for (int i = 0; i < createCount; i++)
       {
-        try
-        {
-          var instance = CreateInstance();
-          Return(instance);
-        }
-        catch (Exception ex)
-        {
-          observer.OnError(ex);
-          yield break;
-        }
+        T instance = CreateInstance();
+        Return(instance);
       }
 
       yield return null;
     }
-
-    observer.OnNext(Unit.Default);
-    observer.OnCompleted();
   }
 
-  #region IDisposable Support
+  #region Dispose
 
   protected virtual void Dispose(bool isDisposing)
   {
-    if (!isDisposed)
-    {
-      if (isDisposing)
-      {
-        Clear();
-      }
+    if (isDisposed) return;
 
-      // Set large field members null.
-      pool = null;
-      trash = null;
-      returnTimerList = null;
+    if (isDisposing) Clear();
 
-      isDisposed = true;
-    }
+    // Set large field members null.
+    pool = null;
+    trash = null;
+    returnTimerList = null;
+
+    isDisposed = true;
   }
 
   public void Dispose()
@@ -322,5 +299,5 @@ public class GenericObjectPool<T> : IDisposable where T : UnityEngine.Component
     GC.SuppressFinalize(this);
   }
 
-  #endregion IDisposable Support
+  #endregion Dispose
 }
