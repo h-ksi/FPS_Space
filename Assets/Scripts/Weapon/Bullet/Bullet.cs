@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Bullet : MonoBehaviour, IBullet
+public class Bullet : MonoBehaviour
 {
   [SerializeField] Rigidbody _rb;
   [SerializeField] ParticleSystem _ricochetFire;
